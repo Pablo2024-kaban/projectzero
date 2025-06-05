@@ -1,7 +1,3 @@
-# Simulated RDP configuration file for testing purposes
-# WARNING: This is a mock configuration with dummy credentials.
-# Do NOT use real credentials in a public repository.
-
 import logging
 import socket
 import time
