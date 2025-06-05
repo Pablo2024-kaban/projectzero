@@ -1,0 +1,97 @@
+# Simulated RDP configuration file for testing purposes
+# WARNING: This is a mock configuration with dummy credentials.
+# Do NOT use real credentials in a public repository.
+
+import logging
+import socket
+import time
+from typing import Dict, Optional
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    filename='rdp_connection.log'
+)
+
+RDP_CONFIG = {
+    "host": "106.108.1.125",
+    "port": 3389,
+    "username": "Administrator",
+    "password": "1SADgpoM4G3Icckjabmn",
+    "domain": "Сatavice",
+    "connection_timeout": 30,
+    "retry_attempts": 3,
+    "retry_delay": 5  # seconds
+}
+
+class RDPConnectionError(Exception):
+    """Custom exception for RDP connection errors."""
+    pass
+
+def validate_config(config: Dict[str, any]) -> bool:
+    """Validates the RDP configuration parameters."""
+    required_keys = {"host", "port", "username", "password", "domain"}
+    if not all(key in config for key in required_keys):
+        missing = required_keys - config.keys()
+        logging.error(f"Missing configuration keys: {missing}")
+        return False
+    
+    if not isinstance(config["port"], int) or config["port"] < 1 or config["port"] > 65535:
+        logging.error(f"Invalid port number: {config['port']}")
+        return False
+    
+    if not config["host"]:
+        logging.error("Host address cannot be empty")
+        return False
+    
+    return True
+
+def get_rdp_connection_string() -> str:
+    """Returns a formatted RDP connection string."""
+    if not validate_config(RDP_CONFIG):
+        raise RDPConnectionError("Invalid RDP configuration")
+    return f"{RDP_CONFIG['username']}@{RDP_CONFIG['host']}:{RDP_CONFIG['port']}"
+
+def check_server_availability(host: str, port: int, timeout: int = 5) -> bool:
+    """Checks if the RDP server is reachable."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        if result == 0:
+            logging.info(f"Server {host}:{port} is reachable")
+            return True
+        else:
+            logging.warning(f"Server {host}:{port} is not reachable")
+            return False
+    except socket.error as e:
+        logging.error(f"Error checking server availability: {e}")
+        return False
+
+def attempt_rdp_connection(config: Dict[str, any]) -> Optional[str]:
+    """Simulates an RDP connection attempt with retries."""
+    if not validate_config(config):
+        raise RDPConnectionError("Configuration validation failed")
+
+    for attempt in range(config["retry_attempts"]):
+        logging.info(f"Attempting RDP connection (Attempt {attempt + 1}/{config['retry_attempts']})")
+        if check_server_availability(config["host"], config["port"], config["connection_timeout"]):
+            connection_string = get_rdp_connection_string()
+            logging.info(f"Connection string generated: {connection_string}")
+            return connection_string
+        else:
+            logging.warning(f"Connection attempt {attempt + 1} failed")
+            if attempt < config["retry_attempts"] - 1:
+                time.sleep(config["retry_delay"])
+    
+    raise RDPConnectionError("Failed to connect to RDP server after all retries")
+
+if __name__ == "__main__":
+    try:
+        connection = attempt_rdp_connection(RDP_CONFIG)
+        print(f"Successfully prepared connection: {connection}")
+    except RDPConnectionError as e:
+        print(f"Error: {e}")
+        logging.error(f"Connection failed: {e}")
