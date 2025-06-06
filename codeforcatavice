@@ -14,7 +14,7 @@ RDP_CONFIG = {
     "host": "106.108.1.125",
     "port": 3389,
     "username": "Administrator",
-    "password": "1SADgpoM4G3Icckjabmn",
+    "password": "**1SADgpoM4G3Icckjabmn**",
     "domain": "Сatavice",
     "connection_timeout": 30,
     "retry_attempts": 3,
